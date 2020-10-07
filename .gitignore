@@ -5,6 +5,7 @@ keys.py
 venv/
 .DS_Store
 *.jpg
+settings.py
 
 
 
