@@ -15,21 +15,23 @@ logging.basicConfig(filename="bot.log", level=logging.INFO, format='%(asctime)s 
 def greet_user(update, context):
     print(update)
     print("Вызван /start")
-    smile = get_emoji()
-    update.message.reply_text(f"Hello User {smile}")
+    context.user_data['emoji'] = get_emoji(context.user_data)
+    update.message.reply_text(f"Hello User {context.user_data['emoji']}")
 
 
 def talk_with_user(update, context):
-    smile = get_emoji()
+    context.user_data['emoji'] = get_emoji(context.user_data)
     text = update.message.text
     print(text)
-    update.message.reply_text(f'{text} {smile}')
+    update.message.reply_text(f"{text} {context.user_data['emoji']}")
 
 
-def get_emoji():
-    emoji_smile = choice(settings.USER_EMOJI)
-    emoji_smile = emojize(emoji_smile, use_aliases=True)
-    return emoji_smile
+def get_emoji(user_data):
+    if 'emoji' not in user_data:
+        emoji_smile = choice(settings.USER_EMOJI)
+        emoji_smile = emojize(emoji_smile, use_aliases=True)
+        return emoji_smile
+    return user_data['emoji']
 
 
 def random_number(user_number):
