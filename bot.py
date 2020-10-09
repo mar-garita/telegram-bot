@@ -2,6 +2,7 @@ from emoji import emojize
 from glob import glob
 import logging
 from random import choice, randint
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 import keys
@@ -16,14 +17,18 @@ def greet_user(update, context):
     print(update)
     print("Вызван /start")
     context.user_data['emoji'] = get_emoji(context.user_data)
-    update.message.reply_text(f"Hello User {context.user_data['emoji']}")
+    keyboard = ReplyKeyboardMarkup([['Прислать котика']])
+    update.message.reply_text(
+        f"Hello User {context.user_data['emoji']}",
+        reply_markup=keyboard
+    )
 
 
 def talk_with_user(update, context):
     context.user_data['emoji'] = get_emoji(context.user_data)
     text = update.message.text
     print(text)
-    update.message.reply_text(f"{text} {context.user_data['emoji']}")
+    update.message.reply_text(f"{text} {context.user_data['emoji']}", reply_markup=main_keyboard())
 
 
 def get_emoji(user_data):
@@ -57,7 +62,7 @@ def play_number(update, context):
             message = "Некорректный ввод! Введите число!"
     else:
         message = "Введите число"
-    update.message.reply_text(message)
+    update.message.reply_text(message, reply_markup=main_keyboard())
 
 
 def send_cat_picture(update, context):
@@ -66,7 +71,11 @@ def send_cat_picture(update, context):
     cat_image = choice(cat_images_list)
 
     chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=chat_id, photo=open(cat_image, 'rb'))
+    context.bot.send_photo(chat_id=chat_id, photo=open(cat_image, 'rb'), reply_markup=main_keyboard())
+
+
+def main_keyboard():
+    return ReplyKeyboardMarkup([['Прислать котика', 'test']])
 
 
 def main():
@@ -75,7 +84,8 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
     dp.add_handler(CommandHandler("play", play_number))
-    dp.add_handler(CommandHandler( "cat", send_cat_picture))
+    dp.add_handler(CommandHandler("cat", send_cat_picture))
+    dp.add_handler(MessageHandler(Filters.regex('^(Прислать котика)$'), send_cat_picture))
     dp.add_handler(MessageHandler(Filters.text, talk_with_user))
 
     logging.info("Bot started")
