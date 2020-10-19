@@ -3,7 +3,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
 from handlers import (greet_user, play_number, send_cat_picture, get_user_location,
-                      talk_with_user)
+                      talk_with_user, check_user_image)
 import keys
 
 
@@ -20,6 +20,7 @@ def main():
     dp.add_handler(CommandHandler("cat", send_cat_picture))
     dp.add_handler(MessageHandler(Filters.regex('^(Прислать котика)$'), send_cat_picture))
     dp.add_handler(MessageHandler(Filters.location, get_user_location))
+    dp.add_handler(MessageHandler(Filters.photo, check_user_image))
     dp.add_handler(MessageHandler(Filters.text, talk_with_user))
 
     logging.info("Bot started")
