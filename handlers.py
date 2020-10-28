@@ -35,7 +35,7 @@ def play_number(update, context):
         except (ValueError, TypeError):
             message = "Некорректный ввод! Введите число!"
     else:
-        message = "Введите число"
+        message = "Введите '/play + число'"
     update.message.reply_text(message, reply_markup=main_keyboard())
 
 
@@ -66,12 +66,12 @@ def check_user_image(update, context):
     user_image.download(file_name)
 
     if is_cat(file_name):
-        emoji = emojize(settings.USER_EMOJI[1], use_aliases=True)
+        emoji = emojize(settings.RESPONCE_EMOJI[1], use_aliases=True)
         update.message.reply_text(f"На фото обнаружен котик, добавляю в библиотеку {emoji}")
         new_file_name = os.path.join("images", f"cat_{user_image.file_id}.jpg")
         os.rename(file_name, new_file_name)
 
     else:
-        emoji = emojize(settings.USER_EMOJI[0], use_aliases=True)
+        emoji = emojize(settings.RESPONCE_EMOJI[0], use_aliases=True)
         update.message.reply_text(f"Котик на фото не обнаружен {emoji}")
         os.remove(file_name)
