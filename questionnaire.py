@@ -1,4 +1,7 @@
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup
+from telegram import ParseMode, ReplyKeyboardRemove, ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler
+
+from utils import main_keyboard
 
 
 def questionnaire_start(update, context):
@@ -30,3 +33,30 @@ def questionnaire_rating(update, context):
         "Оставьте комментарий или пропустите этот шаг, введя /skip"
     )
     return "comment"
+
+
+def questionnaire_comment(update, context):
+    context.user_data['questionnaire']["comment"] = update.message.text
+    print('context.user_data: ', context.user_data)
+    user_text = format_questionnaire(context.user_data['questionnaire'])
+    update.message.reply_text(user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML)
+    return ConversationHandler.END
+
+
+def questionnaire_skip(update, context):
+    user_text = format_questionnaire(context.user_data['questionnaire'])
+    update.message.reply_text(user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML)
+    return ConversationHandler.END
+
+
+def format_questionnaire(questionnaire):
+    user_text = f"""<b>Имя и Фамилия</b>: {questionnaire["name"]}
+<b>Оценка</b>: {questionnaire["rating"]}
+"""
+    if 'comment' in questionnaire:
+        user_text += f'<b>Комментарий</b>: {questionnaire["comment"]}'
+    return user_text
+
+
+def questionnaire_dontknow(update, context):
+    update.message.reply_text("Вы ввели некорректные данные")

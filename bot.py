@@ -4,7 +4,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 
 from handlers import (greet_user, play_number, send_cat_picture, get_user_location,
                       talk_with_user, check_user_image)
-from questionnaire import questionnaire_start, questionnaire_name, questionnaire_rating
+from questionnaire import (questionnaire_start, questionnaire_name, questionnaire_rating, questionnaire_skip,
+                           questionnaire_comment, questionnaire_dontknow)
 import keys
 
 
@@ -24,8 +25,15 @@ def main():
         states={
             "name": [MessageHandler(Filters.text, questionnaire_name)],
             "rating": [MessageHandler(Filters.regex('^(1|2|3|4|5)$'), questionnaire_rating)],
+            "comment": [
+                CommandHandler("skip", questionnaire_skip),
+                MessageHandler(Filters.text, questionnaire_comment)
+            ],
         },
-        fallbacks=[]
+        fallbacks=[
+            MessageHandler(Filters.text | Filters.video | Filters.photo | Filters.document | Filters.location,
+                           questionnaire_dontknow)
+        ]
     )
     dp.add_handler(questionnaire)
 
