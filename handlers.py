@@ -5,27 +5,25 @@ from random import choice
 
 from db import db, create_or_get_user
 import settings
-from utils import get_emoji, is_cat, random_number, main_keyboard
+from utils import is_cat, random_number, main_keyboard
 
 
 def greet_user(update, context):
     user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     print(update)
     print("Вызван /start")
-    context.user_data['emoji'] = get_emoji(context.user_data)
 
     update.message.reply_text(
-        f"Hello User {context.user_data['emoji']}",
+        f"Hello User {user['emoji']}",
         reply_markup=main_keyboard()
     )
 
 
 def talk_with_user(update, context):
     user = create_or_get_user(db, update.effective_user, update.message.chat_id)
-    context.user_data['emoji'] = get_emoji(context.user_data)
     text = update.message.text
     print(text)
-    update.message.reply_text(f"{text} {context.user_data['emoji']}", reply_markup=main_keyboard())
+    update.message.reply_text(f"{text} {user['emoji']}", reply_markup=main_keyboard())
 
 
 def play_number(update, context):
@@ -55,11 +53,10 @@ def send_cat_picture(update, context):
 
 def get_user_location(update, context):
     user = create_or_get_user(db, update.effective_user, update.message.chat_id)
-    context.user_data['emoji'] = get_emoji(context.user_data)
     coordinates = update.message.location
     print(coordinates)
     update.message.reply_text(
-        f"Ваши координаты {coordinates} {context.user_data['emoji']}!",
+        f"Ваши координаты {coordinates} {user['emoji']}!",
         reply_markup=main_keyboard()
     )
 

@@ -1,6 +1,7 @@
 from telegram import ParseMode, ReplyKeyboardRemove, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 
+from db import db, create_or_get_user, save_questionnaire
 from utils import main_keyboard
 
 
@@ -38,12 +39,16 @@ def questionnaire_rating(update, context):
 def questionnaire_comment(update, context):
     context.user_data['questionnaire']["comment"] = update.message.text
     print('context.user_data: ', context.user_data)
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
+    save_questionnaire(db, user['user_id'], context.user_data['questionnaire'])
     user_text = format_questionnaire(context.user_data['questionnaire'])
     update.message.reply_text(user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML)
     return ConversationHandler.END
 
 
 def questionnaire_skip(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
+    save_questionnaire(db, user['user_id'], context.user_data['questionnaire'])
     user_text = format_questionnaire(context.user_data['questionnaire'])
     update.message.reply_text(user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML)
     return ConversationHandler.END
