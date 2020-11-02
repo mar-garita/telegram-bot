@@ -10,3 +10,4 @@ telegram==0.0.1
 tornado==6.0.4
 emoji==0.6.0
 clarifai==2.6.2
+pymongo~=3.11.0

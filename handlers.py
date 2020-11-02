@@ -3,11 +3,13 @@ from glob import glob
 import os
 from random import choice
 
+from db import db, create_or_get_user
 import settings
 from utils import get_emoji, is_cat, random_number, main_keyboard
 
 
 def greet_user(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     print(update)
     print("Вызван /start")
     context.user_data['emoji'] = get_emoji(context.user_data)
@@ -19,6 +21,7 @@ def greet_user(update, context):
 
 
 def talk_with_user(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     context.user_data['emoji'] = get_emoji(context.user_data)
     text = update.message.text
     print(text)
@@ -26,6 +29,7 @@ def talk_with_user(update, context):
 
 
 def play_number(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     print(context.args)
 
     if context.args:
@@ -40,6 +44,7 @@ def play_number(update, context):
 
 
 def send_cat_picture(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     print("Вызван /cat")
     cat_images_list = glob('images/cat*.jp*g')
     cat_image = choice(cat_images_list)
@@ -49,6 +54,7 @@ def send_cat_picture(update, context):
 
 
 def get_user_location(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     context.user_data['emoji'] = get_emoji(context.user_data)
     coordinates = update.message.location
     print(coordinates)
@@ -59,6 +65,7 @@ def get_user_location(update, context):
 
 
 def check_user_image(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     update.message.reply_text("Фото обрабатывается")
     os.makedirs("downloads", exist_ok=True,)
     user_image = context.bot.getFile(update.message.photo[-1].file_id)
