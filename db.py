@@ -29,7 +29,7 @@ def create_or_get_user(db, effective_user, chat_id):
 def save_questionnaire(db, user_id, questionnaire_data):
     user = db.users.find_one({"user_id": user_id})
     questionnaire_data["created"] = datetime.now()
-    if not 'questionnaire' in user:
+    if 'questionnaire' not in user:
         db.users.update_one(
             {'_id': user['_id']},
             {'$set': {'questionnaire': [questionnaire_data]}}
@@ -39,3 +39,22 @@ def save_questionnaire(db, user_id, questionnaire_data):
             {'_id': user['_id']},
             {'$push': {'questionnaire': questionnaire_data}}
         )
+
+
+def subscribe_user(db, user_data):
+    if not user_data.get('subscribe'):
+        db.users.update_one(
+            {'_id': user_data['_id']},
+            {'$set': {'subscribe': True}}
+        )
+
+
+def unsubscribe_user(db, user_data):
+    db.users.update_one(
+        {'_id': user_data['_id']},
+        {'$set': {'subscribe': False}}
+    )
+
+
+def get_subscribe(db):
+    return db.users.find({"subscribe": True})

@@ -3,7 +3,7 @@ from glob import glob
 import os
 from random import choice
 
-from db import db, create_or_get_user
+from db import db, create_or_get_user, subscribe_user, unsubscribe_user
 import settings
 from utils import is_cat, random_number, main_keyboard
 
@@ -79,3 +79,15 @@ def check_user_image(update, context):
         emoji = emojize(settings.RESPONCE_EMOJI[0], use_aliases=True)
         update.message.reply_text(f"Котик на фото не обнаружен {emoji}")
         os.remove(file_name)
+
+
+def subscribe(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
+    subscribe_user(db, user)
+    update.message.reply_text("Вы подписались на рассылку")
+
+
+def unsubscribe(update, context):
+    user = create_or_get_user(db, update.effective_user, update.message.chat_id)
+    unsubscribe_user(db, user)
+    update.message.reply_text("Вы отписались от рассылки")
