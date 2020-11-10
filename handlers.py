@@ -4,6 +4,7 @@ import os
 from random import choice
 
 from db import db, create_or_get_user, subscribe_user, unsubscribe_user
+from job_queue import alarm
 import settings
 from utils import is_cat, random_number, main_keyboard
 
@@ -91,3 +92,13 @@ def unsubscribe(update, context):
     user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     unsubscribe_user(db, user)
     update.message.reply_text("Вы отписались от рассылки")
+
+
+def sets_alarm(update, context):
+    print(context.args)
+    try:
+        alarm_seconds = abs(int(context.args[0]))
+        context.job_queue.run_once(alarm, alarm_seconds, context=update.message.chat.id)
+        update.message.reply_text(f'Вы получите уведомление через {alarm_seconds} секунд')
+    except (ValueError, TypeError):
+        update.message.reply_text("Введите количество секунд после команды /alarm")

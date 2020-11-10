@@ -1,9 +1,12 @@
 import logging
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
+from telegram.bot import Bot
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from telegram.ext import messagequeue as mq
+from telegram.utils.request import Request
 
 from handlers import (greet_user, play_number, send_cat_picture, get_user_location,
-                      talk_with_user, check_user_image, subscribe, unsubscribe)
+                      talk_with_user, check_user_image, subscribe, unsubscribe, sets_alarm)
 from job_queue import send_updates
 from questionnaire import (questionnaire_start, questionnaire_name, questionnaire_rating, questionnaire_skip,
                            questionnaire_comment, questionnaire_dontknow)
@@ -14,11 +17,32 @@ logging.basicConfig(filename="bot.log", level=logging.INFO, format='%(asctime)s 
                                                                                                         '%H:%M:%S')
 
 
+class MQBot(Bot):
+    def __init__(self, *args, is_queued_def=True, msg_queue=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_messages_queued_default = is_queued_def
+        self._msg_queue = msg_queue or mq.MessageQueue()
+
+    def __del__(self):
+        try:
+            self._msg_queue.stop()
+        except:
+            pass
+
+    @mq.queuedmessage
+    def send_message(self, *args, **kwargs):
+        return super().send_message(*args, **kwargs)
+
+
 def main():
-    updater = Updater(keys.API_KEY, use_context=True)
+    request = Request(
+        con_pool_size=8,
+    )
+    bot = MQBot(keys.API_KEY, request=request)
+    updater = Updater(bot=bot)
 
     jq = updater.job_queue
-    jq.run_repeating(send_updates, interval=10, first=0)
+    jq.run_repeating(send_updates, interval=10, first=0, last=30)
 
     dp = updater.dispatcher
 
@@ -47,6 +71,7 @@ def main():
     dp.add_handler(CommandHandler("subscribe", subscribe))
     dp.add_handler(CommandHandler("unsubscribe", unsubscribe))
     dp.add_handler(CommandHandler("cat", send_cat_picture))
+    dp.add_handler(CommandHandler( "alarm", sets_alarm))
     dp.add_handler(MessageHandler(Filters.regex('^(Прислать котика)$'), send_cat_picture))
     dp.add_handler(MessageHandler(Filters.location, get_user_location))
     dp.add_handler(MessageHandler(Filters.photo, check_user_image))
