@@ -1,8 +1,11 @@
+from datetime import time
 import logging
+import pytz
 
 from telegram.bot import Bot
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from telegram.ext import messagequeue as mq
+from telegram.ext.jobqueue import Days
 from telegram.utils.request import Request
 
 from handlers import (greet_user, play_number, send_cat_picture, get_user_location,
@@ -42,7 +45,9 @@ def main():
     updater = Updater(bot=bot)
 
     jq = updater.job_queue
-    jq.run_repeating(send_updates, interval=10, first=0, last=30)
+    target_time = time(23, 53, tzinfo=pytz.timezone('Asia/Tel_Aviv'))
+    target_day = (Days.TUE, Days.THU, Days.SAT)
+    jq.run_daily(send_updates, target_time, target_day)
 
     dp = updater.dispatcher
 
