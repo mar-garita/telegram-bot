@@ -3,10 +3,10 @@ from glob import glob
 import os
 from random import choice
 
-from db import db, create_or_get_user, subscribe_user, unsubscribe_user
+from db import db, create_or_get_user, subscribe_user, unsubscribe_user, save_cat_image_rating, user_rating
 from job_queue import alarm
 import settings
-from utils import is_cat, random_number, main_keyboard
+from utils import is_cat, random_number, main_keyboard, image_rating_inline_keyboard
 
 
 def greet_user(update, context):
@@ -42,14 +42,25 @@ def play_number(update, context):
     update.message.reply_text(message, reply_markup=main_keyboard())
 
 
-def send_cat_picture(update, context):
+def send_cat_image(update, context):
     user = create_or_get_user(db, update.effective_user, update.message.chat_id)
     print("Вызван /cat")
     cat_images_list = glob('images/cat*.jp*g')
-    cat_image = choice(cat_images_list)
+    cat_image_filename = choice(cat_images_list)
 
     chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=chat_id, photo=open(cat_image, 'rb'), reply_markup=main_keyboard())
+    if user_rating(db, cat_image_filename, user['user_id']):
+        keyboard = None
+        caption = 'Вы уже голосовали'
+    else:
+        keyboard = image_rating_inline_keyboard( cat_image_filename )
+        caption = None
+    context.bot.send_photo(
+        chat_id=chat_id,
+        photo=open(cat_image_filename, 'rb'),
+        reply_markup=keyboard,
+        caption=caption,
+    )
 
 
 def get_user_location(update, context):
@@ -102,3 +113,12 @@ def sets_alarm(update, context):
         update.message.reply_text(f'Вы получите уведомление через {alarm_seconds} секунд')
     except (ValueError, TypeError):
         update.message.reply_text("Введите количество секунд после команды /alarm")
+
+
+def cat_image_rating(update, context):
+    update.callback_query.answer()
+    callback_type, image_name, rating = update.callback_query.data.split("|")
+    rating = int(rating)
+    user = create_or_get_user(db, update.effective_user, update.effective_chat.id)
+    save_cat_image_rating(db, user, image_name, rating)
+    update.callback_query.edit_message_caption(caption='Thank you!')

@@ -58,3 +58,19 @@ def unsubscribe_user(db, user_data):
 
 def get_subscribe(db):
     return db.users.find({"subscribe": True})
+
+
+def save_cat_image_rating(db, user_data, image_name, rating):
+    image = db.images.find_one({"image_name": image_name})
+    if not image:
+        image = {
+            "image_name": image_name,
+            "ratings": [{"user_id": user_data["user_id"], "rating": rating}]
+        }
+        db.images.insert_one(image)
+
+
+def user_rating(db, image_name, user_id):
+    if db.images.find_one({"image_name": image_name, "rating.user_id": user_id}):
+        return True
+    return False

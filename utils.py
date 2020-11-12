@@ -1,6 +1,6 @@
 from clarifai.rest import ClarifaiApp
 from random import randint
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 import keys
 
@@ -32,6 +32,17 @@ def is_cat(file_name):
             if concept['name'] == 'cat':
                 return True
     return False
+
+
+def image_rating_inline_keyboard(image_name):
+    callback_text = f'rating|{image_name}|'
+    keyboard = [
+        [
+            InlineKeyboardButton('like', callback_data=callback_text + '1'),
+            InlineKeyboardButton('dislike', callback_data=callback_text + '-1')
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
 
 
 if __name__ == "__main__":
