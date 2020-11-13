@@ -3,7 +3,8 @@ from glob import glob
 import os
 from random import choice
 
-from db import db, create_or_get_user, subscribe_user, unsubscribe_user, save_cat_image_rating, user_rating
+from db import (db, create_or_get_user, subscribe_user, unsubscribe_user,
+                save_cat_image_rating, user_rating, get_image_rating)
 from job_queue import alarm
 import settings
 from utils import is_cat, random_number, main_keyboard, image_rating_inline_keyboard
@@ -15,7 +16,7 @@ def greet_user(update, context):
     print("Вызван /start")
 
     update.message.reply_text(
-        f"Hello User {user['emoji']}",
+        f"Hello {user['first_name']} {user['emoji']}",
         reply_markup=main_keyboard()
     )
 
@@ -50,10 +51,11 @@ def send_cat_image(update, context):
 
     chat_id = update.effective_chat.id
     if user_rating(db, cat_image_filename, user['user_id']):
+        total_rating = get_image_rating(db, cat_image_filename)
         keyboard = None
-        caption = 'Вы уже голосовали'
+        caption=f'CAT RATING: {total_rating}'
     else:
-        keyboard = image_rating_inline_keyboard( cat_image_filename )
+        keyboard = image_rating_inline_keyboard(cat_image_filename)
         caption = None
     context.bot.send_photo(
         chat_id=chat_id,
@@ -121,4 +123,5 @@ def cat_image_rating(update, context):
     rating = int(rating)
     user = create_or_get_user(db, update.effective_user, update.effective_chat.id)
     save_cat_image_rating(db, user, image_name, rating)
-    update.callback_query.edit_message_caption(caption='Thank you!')
+    total_rating = get_image_rating(db, image_name)
+    update.callback_query.edit_message_caption(caption=f'CAT RATING: {total_rating}')

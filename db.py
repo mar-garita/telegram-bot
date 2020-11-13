@@ -68,9 +68,39 @@ def save_cat_image_rating(db, user_data, image_name, rating):
             "ratings": [{"user_id": user_data["user_id"], "rating": rating}]
         }
         db.images.insert_one(image)
+    elif not user_rating(db, image_name, user_data["user_id"]):
+        db.images.update_one(
+            {"image_name": image_name},
+            {"$push": {"ratings": {"user_id": user_data["user_id"], "rating": rating}}}
+        )
 
 
 def user_rating(db, image_name, user_id):
-    if db.images.find_one({"image_name": image_name, "rating.user_id": user_id}):
+    if db.images.find_one({"image_name": image_name, "ratings.user_id": user_id}):
         return True
     return False
+
+
+def get_image_rating(db, image_name):
+    result = db.images.aggregate([
+        {
+            '$match': {
+                'image_name': image_name
+            }
+        }, {
+            '$unwind': {
+                'path': '$ratings'
+            }
+        }, {
+            '$group': {
+                '_id': '$image_name',
+                'total_rating': {
+                    '$sum': '$ratings.rating'
+                }
+            }
+        }
+    ])
+    total_rating = next(result, None)
+    if total_rating:
+        return total_rating['total_rating']
+    return 0
