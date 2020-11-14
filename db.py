@@ -53,6 +53,7 @@ def save_questionnaire(db, user_id, questionnaire_data):
 
 
 def subscribe_user(db, user_data):
+    """Saves the subscription status"""
     if not user_data.get('subscribe'):
         db.users.update_one(
             {'_id': user_data['_id']},
@@ -61,6 +62,7 @@ def subscribe_user(db, user_data):
 
 
 def unsubscribe_user(db, user_data):
+    """Deletes the subscription status"""
     db.users.update_one(
         {'_id': user_data['_id']},
         {'$set': {'subscribe': False}}
@@ -68,18 +70,26 @@ def unsubscribe_user(db, user_data):
 
 
 def get_subscribe(db):
+    """Retrieves all users whose "subscribe" status is set to True from the database"""
     return db.users.find({"subscribe": True})
 
 
 def save_cat_image_rating(db, user_data, image_name, rating):
+    """
+    Saves the user's vote in the database.
+    """
     image = db.images.find_one({"image_name": image_name})
+    # if the image is not in the database, it means that it has no votes:
     if not image:
         image = {
             "image_name": image_name,
             "ratings": [{"user_id": user_data["user_id"], "rating": rating}]
         }
+        # saving images and voting images
         db.images.insert_one(image)
+    # if the user didn't vote:
     elif not user_rating(db, image_name, user_data["user_id"]):
+        # add a user's vote
         db.images.update_one(
             {"image_name": image_name},
             {"$push": {"ratings": {"user_id": user_data["user_id"], "rating": rating}}}
@@ -87,26 +97,32 @@ def save_cat_image_rating(db, user_data, image_name, rating):
 
 
 def user_rating(db, image_name, user_id):
+    """
+    Checks whether the user voted for this image, and if they voted, it returns True, if not - False
+    """
     if db.images.find_one({"image_name": image_name, "ratings.user_id": user_id}):
         return True
     return False
 
 
 def get_image_rating(db, image_name):
+    """
+    Adds the number of likes and dislikes for an image
+    """
     result = db.images.aggregate([
         {
             '$match': {
-                'image_name': image_name
+                'image_name': image_name   # select the desired image by name
             }
         }, {
             '$unwind': {
-                'path': '$ratings'
+                'path': '$ratings'  # 'path' specifies the path, 'ratings' - dictionary with the vote of a user
             }
         }, {
-            '$group': {
+            '$group': {  # groups votes
                 '_id': '$image_name',
                 'total_rating': {
-                    '$sum': '$ratings.rating'
+                    '$sum': '$ratings.rating'  # adds all values of the "rating" key in the "ratings" list"
                 }
             }
         }

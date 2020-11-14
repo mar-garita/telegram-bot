@@ -17,46 +17,55 @@ from questionnaire import (questionnaire_start, questionnaire_name, questionnair
 import keys
 
 
+# String of information in the bot report
 logging.basicConfig(filename="bot.log", level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d '
                                                                                                         '%H:%M:%S')
 
 
 class MQBot(Bot):
+    """
+    Creating a custom bot class that inherits from the standard Bot class
+    """
     def __init__(self, *args, is_queued_def=True, msg_queue=None, **kwargs):
+        """ adding 2 additional parameters is_queued_def and msg_queue """
         super().__init__(*args, **kwargs)
-        self._is_messages_queued_default = is_queued_def
-        self._msg_queue = msg_queue or mq.MessageQueue()
+        self._is_messages_queued_default = is_queued_def  # the default queue
+        self._msg_queue = msg_queue or mq.MessageQueue()  # the queue that was passed
 
     def __del__(self):
         try:
-            self._msg_queue.stop()
+            self._msg_queue.stop()  # stopping _msg_queue
         except:
             pass
 
-    @mq.queuedmessage
+    @mq.queuedmessage  # all messages that will be sent via send_message () will be sent via the queue
     def send_message(self, *args, **kwargs):
+        # super() - calls send_message() of the standard bot
         return super().send_message(*args, **kwargs)
 
 
 def main():
-    request = Request(
+    """The function starts the bot"""
+    request = Request(  # request instance
         con_pool_size=8,
     )
-    bot = MQBot(keys.API_KEY, request=request)
-    updater = Updater(bot=bot)
+    bot = MQBot(keys.API_KEY, request=request)  # instance of the MQBot class
+    updater = Updater(bot=bot)  # instance of a bot that accesses the server and logs in to the telegram platform
 
     jq = updater.job_queue
     target_time = time(23, 53, tzinfo=pytz.timezone('Asia/Tel_Aviv'))
     target_day = (Days.TUE, Days.THU, Days.SAT)
-    jq.run_daily(send_updates, target_time, target_day)
+    jq.run_daily(send_updates, target_time, target_day)  # sends messages to the user at certain times (target_time)
+    # and on certain days (target_day)
 
-    dp = updater.dispatcher
+    dp = updater.dispatcher  # bot dispatcher
 
+    # dialog (in this case, a questionnaire):
     questionnaire = ConversationHandler(
-        entry_points=[
+        entry_points=[  # enter the questionnaire
             MessageHandler(Filters.regex('^(Заполнить анкету)$'), questionnaire_start)
         ],
-        states={
+        states={  # state of dialogue
             "name": [MessageHandler(Filters.text, questionnaire_name)],
             "rating": [MessageHandler(Filters.regex('^(1|2|3|4|5)$'), questionnaire_rating)],
             "comment": [
@@ -64,7 +73,7 @@ def main():
                 MessageHandler(Filters.text, questionnaire_comment)
             ],
         },
-        fallbacks=[
+        fallbacks=[  # intercepted everything that the user sends, in addition to the text
             MessageHandler(
                 Filters.text | Filters.video | Filters.photo | Filters.document | Filters.location,
                 questionnaire_dontknow)
@@ -78,7 +87,9 @@ def main():
     dp.add_handler(CommandHandler("unsubscribe", unsubscribe))
     dp.add_handler(CommandHandler("cat", send_cat_image))
     dp.add_handler(CommandHandler( "alarm", sets_alarm))
+
     dp.add_handler(CallbackQueryHandler(cat_image_rating, pattern="^(rating|)"))
+
     dp.add_handler(MessageHandler(Filters.regex('^(Прислать котика)$'), send_cat_image))
     dp.add_handler(MessageHandler(Filters.location, get_user_location))
     dp.add_handler(MessageHandler(Filters.photo, check_user_image))
