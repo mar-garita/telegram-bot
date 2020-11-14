@@ -6,12 +6,20 @@ from random import choice
 import settings
 
 
+# connecting to the database MongoDB
 client = MongoClient('localhost', 27017)
-
+# selecting a database to save data
 db = client.botdb
 
 
 def create_or_get_user(db, effective_user, chat_id):
+    """
+    The function checks whether the user exists in the database. if not, it adds it.
+    :param db:
+    :param effective_user: Data about the current user sent by telegram.
+    :param chat_id:
+    :return:
+    """
     user = db.users.find_one({"user_id": effective_user.id})
     if not user:
         user = {
@@ -22,11 +30,14 @@ def create_or_get_user(db, effective_user, chat_id):
             "chat_id": chat_id,
             "emoji": emojize(choice(settings.USER_EMOJI), use_aliases=True),
         }
-        db.users.insert_one(user)
+        db.users.insert_one(user)  # insert a document in the collection "users"
     return user
 
 
 def save_questionnaire(db, user_id, questionnaire_data):
+    """
+    Saves the user's questionnaire every time they fill it out.
+    """
     user = db.users.find_one({"user_id": user_id})
     questionnaire_data["created"] = datetime.now()
     if 'questionnaire' not in user:
